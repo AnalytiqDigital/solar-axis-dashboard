@@ -80,7 +80,7 @@ main{flex:1;display:flex;min-height:0}
       <div id="list"></div>
     </section>
     <section id="chat">
-      <div id="chead"><button class="ghost back" id="back">←</button><div id="ctitle" style="flex:1"><b>Select a chat</b></div></div>
+      <div id="chead"><button class="ghost back" id="back">←</button><div id="ctitle" style="flex:1"><b>Select a chat</b></div><button class="ghost" id="closeBtn" style="display:none">Close chat</button></div>
       <div id="msgs"><div class="empty">Pick a conversation from the list.</div></div>
       <div id="note"></div>
       <div id="compose">
@@ -191,6 +191,7 @@ function renderChat(scroll) {
   if (!c) return;
   $('#ctitle').innerHTML = `<b>${esc(c.name || 'Customer')}</b> <span class="tag ${esc(c.status)}">${esc(c.status === 'none' ? 'AI chat' : c.status.replace('_', ' '))}</span><br><small>+${esc(c.phone)}${c.reason ? ' · ' + esc(c.reason) : ''}</small>`;
   const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  $('#closeBtn').style.display = c.hasOpen ? 'inline-block' : 'none';
   const rows = c.msgs.length ? c.msgs : (c.fallback ? [{ dir: 'in', sender: 'customer', text: c.fallback, at: c.fallbackAt }] : []);
   box.innerHTML = rows.length ? rows.map((m) => {
     const cls = m.dir === 'in' ? 'in' : (m.sender === 'admin' ? 'out admin' : m.sender === 'team' ? 'out team' : 'out');
@@ -211,6 +212,14 @@ $('#send').onclick = async () => {
   try { await api('/api/reply', { method: 'POST', body: JSON.stringify({ to: c.phone, text, name: c.name }) }); $('#txt').value = ''; await refresh(false); renderChat(true); }
   catch (e) { alert(e.message + (e.hint ? '\n\n' + e.hint : '')); }
   $('#send').disabled = false;
+};
+$('#closeBtn').onclick = async () => {
+  const c = convs.find((x) => x.phone === selected);
+  if (!c || !confirm('Close this chat for ' + (c.name || '+' + c.phone) + '? The customer will not be notified.')) return;
+  $('#closeBtn').disabled = true;
+  try { await api('/api/close', { method: 'POST', body: JSON.stringify({ phone: c.phone }) }); await refresh(false); }
+  catch (e) { alert(e.message); }
+  $('#closeBtn').disabled = false;
 };
 $('#txt').onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#send').click(); } };
 
