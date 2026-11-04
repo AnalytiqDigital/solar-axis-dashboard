@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Solar Axis · Chat Admin</title>
+<style>
+:root{--bg:#0f172a;--panel:#1e293b;--line:#334155;--txt:#e2e8f0;--mut:#94a3b8;--acc:#f59e0b;--red:#ef4444;--grn:#22c55e;--blu:#3b82f6}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{font:14px system-ui,Segoe UI,sans-serif;background:var(--bg);color:var(--txt)}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:8px 12px;background:var(--acc);color:#111;font-weight:600}
+button.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:default}
+input,textarea{font:inherit;width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:#0b1220;color:var(--txt)}
+#login{max-width:340px;margin:18vh auto;padding:24px;background:var(--panel);border-radius:12px}
+#login h2{margin:0 0 12px}#login p{color:var(--mut)}
+#app{display:none;height:100%;flex-direction:column}
+header{display:flex;gap:10px;align-items:center;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+header h1{font-size:16px;margin:0;flex:1}
+.pill{padding:3px 9px;border-radius:99px;font-size:12px;background:#0b1220;border:1px solid var(--line);color:var(--mut)}
+.pill.hot{background:var(--red);color:#fff;border-color:var(--red)}
+#banner{display:none;background:var(--red);color:#fff;padding:10px 14px;font-weight:600;cursor:pointer}
+#warn{display:none;background:#78350f;color:#fde68a;padding:8px 14px}
+main{flex:1;display:flex;min-height:0}
+#side{width:340px;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#tools{padding:10px;display:grid;gap:8px}
+#tabs{display:flex;gap:6px;flex-wrap:wrap}
+#tabs button{padding:5px 10px;background:transparent;color:var(--mut);border:1px solid var(--line);font-weight:500}
+#tabs button.on{background:var(--acc);color:#111;border-color:var(--acc)}
+#list{overflow:auto;flex:1}
+.row{padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:hover,.row.sel{background:var(--panel)}
+.row .t{display:flex;justify-content:space-between;gap:8px}
+.row b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row small{color:var(--mut)}
+.row .p{color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
+.tag{font-size:11px;padding:1px 7px;border-radius:99px;font-weight:700;color:#111}
+.tag.open{background:var(--red);color:#fff}.tag.closed{background:var(--grn)}.tag.lead,.tag.followed_up{background:var(--acc)}
+.tag.concluded,.tag.expired,.tag.none{background:var(--line);color:var(--txt)}
+#chat{flex:1;display:flex;flex-direction:column;min-width:0}
+#chead{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}
+#chead .back{display:none}
+#msgs{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
+.m{max-width:75%;padding:8px 11px;border-radius:12px;background:var(--panel);white-space:pre-wrap;word-break:break-word}
+.m.in{align-self:flex-start}.m.out{align-self:flex-end;background:#14532d}.m.admin{background:#1e3a8a}.m.team{background:#4c1d95}
+.m small{display:block;color:var(--mut);margin-top:3px;font-size:11px}
+.empty{margin:auto;color:var(--mut);text-align:center;padding:20px}
+#compose{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:flex-end}
+#compose textarea{resize:none;height:44px}
+#note{padding:0 14px 8px;color:var(--mut);font-size:12px}
+@media(max-width:760px){#side{width:100%}#chat{display:none}body.chatting #side{display:none}body.chatting #chat{display:flex}#chead .back{display:inline-block}}
+</style>
+</head>
+<body>
+<div id="login">
+  <h2>Solar Axis Admin</h2>
+  <p>Enter the dashboard password.</p>
+  <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+  <p id="lerr" style="color:var(--red)"></p>
+  <button id="go" style="width:100%">Sign in</button>
+</div>
+
+<div id="app">
+  <header>
+    <h1>Solar Axis · Chats</h1>
+    <span class="pill" id="cOpen">0 open handoffs</span>
+    <span class="pill" id="sync">…</span>
+    <button class="ghost" id="snd" title="Toggle alert sound">🔔 On</button>
+    <button class="ghost" id="out">Sign out</button>
+  </header>
+  <div id="banner"></div>
+  <div id="warn"></div>
+  <main>
+    <section id="side">
+      <div id="tools">
+        <input id="q" placeholder="Search name, number or message">
+        <div id="tabs"></div>
+      </div>
+      <div id="list"></div>
+    </section>
+    <section id="chat">
+      <div id="chead"><button class="ghost back" id="back">←</button><div id="ctitle" style="flex:1"><b>Select a chat</b></div></div>
+      <div id="msgs"><div class="empty">Pick a conversation from the list.</div></div>
+      <div id="note"></div>
+      <div id="compose">
+        <textarea id="txt" placeholder="Reply to customer…" disabled></textarea>
+        <button id="send" disabled>Send</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let pw = sessionStorage.getItem('pw') || '';
+let data = { handoffs: [], messages: [], chatLogReady: true };
+let convs = [];
+let selected = null;
+let filter = 'all';
+let soundOn = localStorage.getItem('sound') !== 'off';
+let timer, audioCtx, flashTimer;
+const TABS = [['all','All'],['open','Open handoffs'],['lead','Leads'],['closed','Closed']];
+const SEEN_KEY = 'seenHandoffs';
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', 'x-dashboard-password': pw, ...(opts.headers || {}) } });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) { logout(); throw new Error('Unauthorized'); }
+  if (!r.ok) { const e = new Error(j.error || 'Request failed'); e.hint = j.hint; throw e; }
+  return j;
+}
+
+function logout() { sessionStorage.removeItem('pw'); pw = ''; clearInterval(timer); $('#app').style.display = 'none'; $('#login').style.display = 'block'; }
+async function login() {
+  pw = $('#pw').value; $('#lerr').textContent = '';
+  try { await api('/api/overview'); sessionStorage.setItem('pw', pw); start(); }
+  catch (e) { $('#lerr').textContent = e.message === 'Unauthorized' ? 'Wrong password' : e.message; }
+}
+$('#go').onclick = login; $('#pw').onkeydown = (e) => e.key === 'Enter' && login(); $('#out').onclick = logout;
+
+function start() {
+  $('#login').style.display = 'none'; $('#app').style.display = 'flex';
+  $('#tabs').innerHTML = TABS.map(([k, l]) => `<button data-k="${k}" class="${k === filter ? 'on' : ''}">${l}</button>`).join('');
+  $('#tabs').onclick = (e) => { const k = e.target.dataset.k; if (k) { filter = k; start2(); render(); } };
+  updateSoundBtn(); refresh(true); clearInterval(timer); timer = setInterval(() => refresh(false), 10000);
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+}
+function start2() { document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.k === filter)); }
+
+function build() {
+  const map = new Map();
+  const get = (phone, name) => {
+    if (!map.has(phone)) map.set(phone, { phone, name: '', status: 'none', reason: '', msgs: [], last: '', lastAt: 0, hasOpen: false, handoffAt: 0 });
+    const c = map.get(phone); if (name && !c.name) c.name = name; return c;
+  };
+  for (const m of data.messages) {
+    const c = get(String(m.customer_phone), m.customer_name);
+    c.msgs.push({ id: m.id, dir: m.direction, sender: m.sender, text: m.text, at: new Date(m.createdAt).getTime() });
+  }
+  for (const h of data.handoffs) {
+    const c = get(String(h.customer_phone), h.customer_name);
+    const at = new Date(h.updatedAt || h.createdAt).getTime();
+    if (h.status === 'open') { c.hasOpen = true; c.reason = h.reason || c.reason; }
+    if (at >= c.handoffAt) { c.handoffAt = at; if (!c.hasOpen) { c.status = h.status; c.reason = h.reason || ''; } }
+    if (!c.msgs.length && h.last_message) { c.fallback = h.last_message; c.fallbackAt = at; }
+  }
+  convs = [...map.values()].map((c) => {
+    c.msgs.sort((a, b) => a.at - b.at);
+    if (c.hasOpen) c.status = 'open';
+    const lm = c.msgs[c.msgs.length - 1];
+    c.last = lm ? lm.text : (c.fallback || '');
+    c.lastAt = Math.max(lm ? lm.at : 0, c.handoffAt, c.fallbackAt || 0);
+    const lastIn = [...c.msgs].reverse().find((m) => m.dir === 'in');
+    c.lastInAt = lastIn ? lastIn.at : 0;
+    return c;
+  }).sort((a, b) => (b.hasOpen - a.hasOpen) || (b.lastAt - a.lastAt));
+}
+
+function fmt(t) {
+  if (!t) return ''; const d = new Date(t), n = new Date();
+  return d.toDateString() === n.toDateString() ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function render() {
+  const q = $('#q').value.trim().toLowerCase();
+  const list = convs.filter((c) => {
+    if (filter === 'open' && !c.hasOpen) return false;
+    if (filter === 'lead' && !['lead', 'followed_up'].includes(c.status)) return false;
+    if (filter === 'closed' && c.status !== 'closed') return false;
+    return !q || (c.name + ' ' + c.phone + ' ' + c.last).toLowerCase().includes(q);
+  });
+  $('#list').innerHTML = list.length ? list.map((c) => `
+    <div class="row ${c.phone === selected ? 'sel' : ''}" data-p="${esc(c.phone)}">
+      <div class="t"><b>${esc(c.name || '+' + c.phone)}</b><small>${fmt(c.lastAt)}</small></div>
+      <div class="t"><small>+${esc(c.phone)}</small><span class="tag ${esc(c.status)}">${esc(c.status === 'none' ? 'AI chat' : c.status.replace('_', ' '))}</span></div>
+      <div class="p">${esc(c.last)}</div>
+    </div>`).join('') : '<div class="empty">No conversations.</div>';
+  const open = convs.filter((c) => c.hasOpen).length;
+  $('#cOpen').textContent = `${open} open handoff${open === 1 ? '' : 's'}`; $('#cOpen').classList.toggle('hot', open > 0);
+  $('#warn').style.display = data.chatLogReady ? 'none' : 'block';
+  $('#warn').textContent = 'Message history is not being recorded yet. Chat history appears once the chat log table exists and the workflow logs to it (see README).';
+  renderChat(false);
+}
+$('#list').onclick = (e) => { const r = e.target.closest('.row'); if (r) { selected = r.dataset.p; document.body.classList.add('chatting'); render(); renderChat(true); } };
+$('#q').oninput = render; $('#back').onclick = () => document.body.classList.remove('chatting');
+
+function renderChat(scroll) {
+  const c = convs.find((x) => x.phone === selected); const box = $('#msgs');
+  if (!c) return;
+  $('#ctitle').innerHTML = `<b>${esc(c.name || 'Customer')}</b> <span class="tag ${esc(c.status)}">${esc(c.status === 'none' ? 'AI chat' : c.status.replace('_', ' '))}</span><br><small>+${esc(c.phone)}${c.reason ? ' · ' + esc(c.reason) : ''}</small>`;
+  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  const rows = c.msgs.length ? c.msgs : (c.fallback ? [{ dir: 'in', sender: 'customer', text: c.fallback, at: c.fallbackAt }] : []);
+  box.innerHTML = rows.length ? rows.map((m) => {
+    const cls = m.dir === 'in' ? 'in' : (m.sender === 'admin' ? 'out admin' : m.sender === 'team' ? 'out team' : 'out');
+    const who = m.dir === 'in' ? 'Customer' : (m.sender === 'admin' ? 'Admin (dashboard)' : m.sender === 'team' ? 'Team' : 'AI');
+    return `<div class="m ${cls}">${esc(m.text)}<small>${who} · ${fmt(m.at)}</small></div>`;
+  }).join('') : '<div class="empty">No recorded messages for this chat yet.</div>';
+  if (scroll || atBottom) box.scrollTop = box.scrollHeight;
+  const inWindow = c.lastInAt && Date.now() - c.lastInAt < 24 * 3600 * 1000;
+  const unknown = !c.lastInAt;
+  $('#txt').disabled = false; $('#send').disabled = false;
+  $('#note').textContent = inWindow || unknown ? 'Sends straight to the customer. Does not change the team handoff or alerts.' : '⚠ Customer last messaged over 24h ago — WhatsApp may reject a free-text reply.';
+}
+
+$('#send').onclick = async () => {
+  const c = convs.find((x) => x.phone === selected); const text = $('#txt').value.trim();
+  if (!c || !text) return;
+  $('#send').disabled = true;
+  try { await api('/api/reply', { method: 'POST', body: JSON.stringify({ to: c.phone, text, name: c.name }) }); $('#txt').value = ''; await refresh(false); renderChat(true); }
+  catch (e) { alert(e.message + (e.hint ? '\n\n' + e.hint : '')); }
+  $('#send').disabled = false;
+};
+$('#txt').onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#send').click(); } };
+
+function beep() {
+  if (!soundOn) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    [880, 660, 880].forEach((f, i) => { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.frequency.value = f; o.connect(g); g.connect(audioCtx.destination); g.gain.setValueAtTime(.2, audioCtx.currentTime + i * .25); o.start(audioCtx.currentTime + i * .25); o.stop(audioCtx.currentTime + i * .25 + .18); });
+  } catch {}
+}
+function updateSoundBtn() { $('#snd').textContent = soundOn ? '🔔 On' : '🔕 Off'; }
+$('#snd').onclick = () => { soundOn = !soundOn; localStorage.setItem('sound', soundOn ? 'on' : 'off'); updateSoundBtn(); if (soundOn) beep(); };
+
+function alertNew(fresh) {
+  const names = fresh.map((h) => h.customer_name || '+' + h.customer_phone).join(', ');
+  const b = $('#banner'); b.style.display = 'block'; b.textContent = `🚨 AI handoff: ${names} needs a human. Click to open.`;
+  b.onclick = () => { selected = String(fresh[0].customer_phone); document.body.classList.add('chatting'); b.style.display = 'none'; render(); renderChat(true); };
+  beep();
+  if ('Notification' in window && Notification.permission === 'granted') new Notification('Solar Axis: new handoff', { body: names });
+  clearInterval(flashTimer); const t = document.title; let on = false;
+  flashTimer = setInterval(() => { document.title = (on = !on) ? '🚨 New handoff!' : t; }, 1000);
+  window.addEventListener('focus', () => { clearInterval(flashTimer); document.title = t; }, { once: true });
+}
+
+async function refresh(first) {
+  try {
+    data = await api('/api/overview');
+    $('#sync').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const open = data.handoffs.filter((h) => h.status === 'open');
+    const seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'));
+    const fresh = open.filter((h) => !seen.has(String(h.id)));
+    if (fresh.length && !first && localStorage.getItem(SEEN_KEY)) alertNew(fresh);
+    else if (fresh.length && first && localStorage.getItem(SEEN_KEY)) alertNew(fresh);
+    localStorage.setItem(SEEN_KEY, JSON.stringify(data.handoffs.map((h) => String(h.id)).slice(0, 1000)));
+    build(); render();
+  } catch (e) { if (e.message !== 'Unauthorized') $('#sync').textContent = 'Offline: ' + e.message.slice(0, 60); }
+}
+
+if (pw) { $('#login').style.display = 'none'; api('/api/overview').then(start).catch(logout); }
+</script>
+</body>
+</html>
