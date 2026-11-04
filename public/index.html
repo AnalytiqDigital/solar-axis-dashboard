@@ -118,7 +118,7 @@ async function login() {
   try { await api('/api/overview'); sessionStorage.setItem('pw', pw); start(); }
   catch (e) { $('#lerr').textContent = e.message === 'Unauthorized' ? 'Wrong password' : e.message; }
 }
-$('#go').onclick = login; $('#pw').onkeydown = (e) => e.key === 'Enter' && login(); $('#out').onclick = logout;
+$('#go').onclick = login; $('#pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); }); $('#out').onclick = logout;
 
 function start() {
   $('#login').style.display = 'none'; $('#app').style.display = 'flex';
